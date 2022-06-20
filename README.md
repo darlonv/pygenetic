@@ -1,0 +1,2 @@
+# pygenetic
+Genetig Algorithm framework
