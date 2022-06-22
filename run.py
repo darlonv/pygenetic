@@ -19,6 +19,7 @@ PROB_MUTATION= 0.3
 # PORC_ELITE = 0.5
 
 ALG_SELECTION = 'roulette'
+FILE_OUTPUT = 'population.csv'
 
 N_REPORT=1
 
@@ -29,6 +30,7 @@ parser.add_argument('-g', '--generations', help=f'Maximum number of generations.
 parser.add_argument('-sa', '--selection', help=f'Selection algorithm. Default: {ALG_SELECTION}', choices=['roulette','fitness','tournament','ranking'])
 parser.add_argument('-mp', '--mutation', help=f'Mutation probability. Default: {PROB_MUTATION}', type=float, default=PROB_MUTATION)
 
+parser.add_argument('-o', '--output', help=f'Name of the output CSV file, with the complete final population. Default: {FILE_OUTPUT}', default=FILE_OUTPUT)
 parser.add_argument('-q', '--quiet', help='No output', action='store_true')
 parser.add_argument('-r', '--report', help=f'Show final population, ordered by fitness. Default: {N_REPORT}', type=int, default=N_REPORT)
 parser.add_argument('-v', '--verbose', help='Detail output', action='store_true')
@@ -40,6 +42,7 @@ if args.verbose:        VERBOSE=True
 if args.population:     POPSIZE = args.population
 if args.mutation:       PROB_MUTATION = args.mutation
 if args.generations:    MAX_GENERATIONS = args.generations
+if args.output:    FILE_OUTPUT = args.output
 if args.quiet:          OUTPUT=False
 if args.report:         N_REPORT=args.report
 # if args.noprogress:     PROGRESS_BAR = False
@@ -56,7 +59,8 @@ ag = Genetic(pop_size = POPSIZE,
     verbose = VERBOSE,
     alg_selection=ALG_SELECTION,
     output=OUTPUT,
-    report=N_REPORT)
+    report=N_REPORT,
+    file_output=FILE_OUTPUT)
 
 ag.run()
 

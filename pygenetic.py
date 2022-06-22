@@ -12,7 +12,6 @@ import random
 
 
 class Genetic:
-    fit = None
     population = None
     pop_size = None
     max_gen = None
@@ -24,18 +23,20 @@ class Genetic:
 
     output = None
     report = None
+    file_output = None
 
     #Algoritmos
     alg_selection = None
 
-    def __init__(self, pop_size=100, max_gen=10, verbose=False, prob_mutation=0.3,  alg_selection='roulette', output=True, report=0):
+    def __init__(self, pop_size=100, max_gen=10, verbose=False, prob_mutation=0.3,  alg_selection='roulette', output=True, report=0, file_output=None):
         self.pop_size = pop_size
         self.max_gen = max_gen
         self.verbose = verbose
-        self.prob_mutation  = porcentprob_mutation_mutation
+        self.prob_mutation  = prob_mutation
         self.alg_selection = alg_selection
         self.output = output
         self.report = report
+        self.file_output = file_output
 
     def populate(self):
         self.population = initial_population(self.pop_size)
@@ -118,6 +119,9 @@ class Genetic:
         else:
             print(self.df_pop.head(1)[['Individuals','Fitness']])
         
+        if self.file_output:
+            self.df_pop[['Individuals', 'Fitness']].to_csv(self.file_output)
+
         if self.verbose:
             print('Finished')
 
