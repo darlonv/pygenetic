@@ -1,5 +1,6 @@
 
 #External functions
+from operator import index
 from functions import fitness, crossover, mutation, initial_population
 
 from tqdm import tqdm
@@ -10,10 +11,8 @@ from time import sleep
 import random
 
 
-class genetic:
+class Genetic:
     fit = None
-    fit_old = None
-    fit_sum = None
     population = None
     pop_size = None
     max_gen = None
@@ -21,66 +20,72 @@ class genetic:
     df_pop = None
 
     #Parâmetros
-    porcent_selection = None
-    porcent_crossover = None
-    porcent_mutation = None
+    prob_mutation = 0.5
 
-    #Funções externas
-    # fitness = fitness
-    # cross = cross
-    # mutation = mutation
+    output = None
+    report = None
 
-    def __init__(self, pop_size=100, max_gen=10, verbose=False, porcent_selection=0.4, porcent_mutation=0.3, porcent_crossover=0.3):
+    #Algoritmos
+    alg_selection = None
+
+    def __init__(self, pop_size=100, max_gen=10, verbose=False, prob_mutation=0.3,  alg_selection='roulette', output=True, report=0):
         self.pop_size = pop_size
         self.max_gen = max_gen
         self.verbose = verbose
-        self.porcent_selection = porcent_selection
-        self.porcent_crossover = porcent_crossover
-        self.porcent_mutation  = porcent_mutation
+        self.prob_mutation  = porcentprob_mutation_mutation
+        self.alg_selection = alg_selection
+        self.output = output
+        self.report = report
 
     def populate(self):
         self.population = initial_population(self.pop_size)
         self.df_pop = pd.DataFrame({'Individuals': self.population})
-        print(self.df_pop)
+
+    def fitness(self):
+        #Calculate Fitness
+        self.df_pop['Fitness'] = list(map(fitness, self.df_pop['Individuals']))
+
+    def relative_fitness(self):
+        #Calculate Relative Fitness
+        self.df_pop['Fitness_relative'] = self.df_pop['Fitness'] / self.df_pop['Fitness'].sum()
+        self.df_pop.sort_values('Fitness', ascending=False, inplace=True, ignore_index=True)
+        self.df_pop['Interval_max'] = self.df_pop['Fitness_relative'].cumsum()
+        self.df_pop['Interval_min'] = self.df_pop['Interval_max']-self.df_pop['Fitness_relative']
 
     def evolve(self):
         if self.verbose:
             print('Evolving..')
 
-        #Calculate Fitness
-        self.df_pop['Fitness'] = list(map(fitness, self.df_pop['Individuals']))
-        self.fit_sum = self.df_pop['Fitness'].sum()
-        #Calculate Relative Fitness
-        self.df_pop['Fitness_relative'] = self.df_pop['Fitness'] / self.fit_sum 
-        self.df_pop.sort_values('Fitness', ascending=False, inplace=True, ignore_index=True)
-        self.df_pop['Interval_max'] = self.df_pop['Fitness_relative'].cumsum()
-        self.df_pop['Interval_min'] = self.df_pop['Interval_max']-self.df_pop['Fitness_relative']
-        # print(self.df_pop)
-
-        #Elite
-        df_elite = self.selection_roulette(self.porcent_selection)
-
         #Crossover
-        df_crossover_p1 = self.selection_roulette(self.porcent_crossover)
-        df_crossover_p2 = self.selection_roulette(self.porcent_crossover)
-
-        df_crossover = pd.DataFrame({'p1':df_crossover_p1['Individuals'].tolist(), 'p2':df_crossover_p2['Individuals'].tolist()})
-        df_crossover['Individuals'] = list(map(crossover, df_crossover['p1'], df_crossover['p2']))
-
-
+        sons_cross = []
+        while len(sons_cross) < self.pop_size:
+            if self.alg_selection == 'roulette':
+                father, mother = self.selection_roulette(), self.selection_roulette()
+            
+            sons_cross.append(crossover(father, mother))
+        
+ 
         #Mutation
-        df_mutation = self.selection_roulette(self.porcent_mutation)
-        df_mutation['Individuals'] = list(map(mutation, df_mutation['Individuals']))
+        sons_mutation = []
+        for son in sons_cross:
+            r = random.random()
+            if r < self.prob_mutation:
+                son = mutation(son)
+            sons_mutation.append(son)
+        self.df_pop['Individuals'] = sons_mutation
 
-        #Get Elite, Crossover and Mutation results as the new population
-        col='Individuals'        
-        self.df_pop = pd.concat([df_elite[[col]], df_crossover[[col]], df_mutation[[col]]], ignore_index=True)
+        self.fitness()
+        if self.alg_selection == 'roulette':
+            self.relative_fitness()
         
 
 
     def run(self):
         if not self.population:
             self.populate()
+            self.fitness()
+            if self.alg_selection == 'roulette':
+                self.relative_fitness()
         else:
             if self.verbose:
                 print('Population generated')
@@ -89,40 +94,38 @@ class genetic:
 
         if self.verbose:
             print('Running...')
-        for gen in tqdm(range(self.max_gen)):
-            if self.verbose:
-                print(f'Generation {gen}')
 
-            #Evolve onde generation
-            self.evolve()
+        if self.output:
+            #Evolve showing a progress bar
+            for gen in tqdm(range(self.max_gen)):
+                if self.verbose: print(f'Generation {gen}')
+
+                #Evolve a generation
+                self.evolve()
+        else:
+            #Evolve without show a progress bar.
+            for gen in range(self.max_gen):
+                if self.verbose: print(f'Generation {gen}')
+
+                #Evolve a generation
+                self.evolve()
+
             
-        print('Final population:')
         self.df_pop['Fitness'] = list(map(fitness, self.df_pop['Individuals']))
         self.df_pop.sort_values('Fitness', ascending=False, inplace=True, ignore_index=True)
-        print(self.df_pop.iloc[0])
-
-
-
-
-
+        if self.report:
+            print(self.df_pop.head(self.report)[['Individuals','Fitness']])
+        else:
+            print(self.df_pop.head(1)[['Individuals','Fitness']])
+        
         if self.verbose:
             print('Finished')
 
-    def selection_roulette(self, porc):
-        if self.verbose:
-            print('Selection Roulette')
-
-        selected_idx = []
-        n_selection = round(self.pop_size * porc)
-        # print(n_selection, porc)
-        for i in range(n_selection):
-            r = random.random()
-            # print('r:',r)
-            selected_idx.append(self.df_pop[(self.df_pop['Interval_min']<= r) & ((self.df_pop['Interval_max']>= r)) ].index.values[0])
-        # print(selected_idx)
+    def selection_roulette(self):
         
-        df_select = self.df_pop.loc[self.df_pop.index[selected_idx]]
-        return df_select
+        r = random.random()
+        return self.df_pop[(self.df_pop['Interval_min']<= r) & ((self.df_pop['Interval_max']>= r)) ]['Individuals'].values[0]
+
 
         
 

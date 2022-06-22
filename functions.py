@@ -25,7 +25,7 @@ def crossover(indiv0, indiv1, verbose=False):
     #######################################
     if verbose:
         print('Genetic cross function')
-    meio = round(len(indiv0)/2)
+    meio = len(indiv0)//2
 
     son = indiv0[:meio]+indiv1[meio:]
     #######################################
@@ -36,28 +36,32 @@ def mutation(indiv, verbose=False):
     mutate = indiv.copy()
 
     #######################################
+    
     if verbose:
         print('Genetic mutation function')
     random.shuffle(mutate)
+
     #######################################
 
     return mutate
 
-def initial_population(size=10, verbose=False):
-    pop = [] #Population
+def initial_population(size, verbose=False):
+    population = [] #Population
 
-    #######################################
     if verbose:
         print(f'Generating initial population with size {size}')
+    
+    #######################################
+    
 
     for i in range(size):
         x = list(range(12))
         random.shuffle(x)
-        pop.append(x)
+        population.append(x)
     
 
 
     #######################################
 
     #Return the population
-    return pop
+    return population

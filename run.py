@@ -1,29 +1,36 @@
 import argparse
+import sys
+
+from pygenetic import Genetic
 
 #Variables and default values
 POP_SIZE = 100
 MAX_GENERATIONS = 100
 QUIT = 10
-CROSSOVER_PROB= 0.5
-MUTATION_PROB= 0.5
-SELECTION_ALG = None
+
 VERBOSE=False
-QUIET = False
+OUTPUT = True
 PROGRESS_BAR = True
-SELECTION_PORC = 0.5
-SELECTION_ALG = None
+
+SELECTION_ALG = 'roulette'
+
+# PORC_CROSSOVER= 0.5
+PROB_MUTATION= 0.3
+# PORC_ELITE = 0.5
+
+ALG_SELECTION = 'roulette'
+
+N_REPORT=1
 
 parser = argparse.ArgumentParser()
-#parser.add_argument('echo', help='Echo the string you use here')
-parser.add_argument('-p', '--population', help='population size', type=int, default=POP_SIZE)
-parser.add_argument('-g', '--generations', help='Maximum number of iterations', type=int, default=MAX_GENERATIONS)
-# parser.add_argument('-q', '--quit', help='Maximum generations to test without improvements', type=int, default = QUIT)
-parser.add_argument('-q', '--quiet', help='No stdout output', type=bool, default = QUIET)
-parser.add_argument('-b', '--progress', help='Show progress bar, according to the max number of iterations', type=bool, default = True)
-parser.add_argument('-c', '--cross', help='Crossover probability', type=float, default=CROSSOVER_PROB)
-parser.add_argument('-m', '--mutation', help='Mutation probability', type=float, default=MUTATION_PROB)
-parser.add_argument('-sa', '--selectionalg', help='Selection algorithm', type=int, default=SELECTION_ALG)
-parser.add_argument('-sp', '--selectionporcent', help='Selection algorithm', type=float, default=SELECTION_PORC)
+parser.add_argument('-p', '--population', help=f'Population size. Default: {POP_SIZE}', type=int, default=POP_SIZE)
+parser.add_argument('-g', '--generations', help=f'Maximum number of generations. Default: {MAX_GENERATIONS}', type=int, default=MAX_GENERATIONS)
+
+parser.add_argument('-sa', '--selection', help=f'Selection algorithm. Default: {ALG_SELECTION}', choices=['roulette','fitness','tournament','ranking'])
+parser.add_argument('-mp', '--mutation', help=f'Mutation probability. Default: {PROB_MUTATION}', type=float, default=PROB_MUTATION)
+
+parser.add_argument('-q', '--quiet', help='No output', action='store_true')
+parser.add_argument('-r', '--report', help=f'Show final population, ordered by fitness. Default: {N_REPORT}', type=int, default=N_REPORT)
 parser.add_argument('-v', '--verbose', help='Detail output', action='store_true')
 
 
@@ -31,18 +38,26 @@ args = parser.parse_args()
 
 if args.verbose:        VERBOSE=True
 if args.population:     POPSIZE = args.population
+if args.mutation:       PROB_MUTATION = args.mutation
 if args.generations:    MAX_GENERATIONS = args.generations
-# if args.quit:           QUIT = args.quit
-if args.quiet:          QUIET=args.quiet
-if args.progress:       PROGRESS_BAR = args.progress
-if args.cross:          CROSSOVER_PROB = args.cross
-if args.mutation:       MUTATION_PROB = args.mutation
-if args.selectionporcent:     SELECTION_PORC = args.selectionporcent
-if args.selectionalg:   SELECTION_ALG = args.selectionalg
+if args.quiet:          OUTPUT=False
+if args.report:         N_REPORT=args.report
+# if args.noprogress:     PROGRESS_BAR = False
 
-from pygenetic import genetic
+if args.selection:   ALG_SELECTION = args.selection
 
-ag = genetic(pop_size = POPSIZE, max_gen = MAX_GENERATIONS, verbose = VERBOSE, porcent_selection=SELECTION_PORC)
+# if args.elite:          PORC_ELITE = args.elite
+# if args.crossover:      PORC_CROSSOVER = args.crossover
+if args.mutation:       PROB_MUTATION = args.mutation
+
+
+ag = Genetic(pop_size = POPSIZE,
+    max_gen = MAX_GENERATIONS,
+    verbose = VERBOSE,
+    alg_selection=ALG_SELECTION,
+    output=OUTPUT,
+    report=N_REPORT)
+
 ag.run()
 
 # # ag.populate()
